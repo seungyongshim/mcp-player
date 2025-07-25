@@ -1,0 +1,9 @@
+{
+    "chat.mcp.serverSampling": {
+        "mcp-player/.vscode/mcp.json: my-mcp-server-729ce001": {
+            "allowedModels": [
+                "copilot/claude-3.7-sonnet"
+            ]
+        }
+    }
+}

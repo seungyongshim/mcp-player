@@ -1,4 +1,5 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
+using Microsoft.Extensions.AI;
 using ModelContextProtocol.Server;
 
 /// <summary>
@@ -8,12 +9,35 @@ using ModelContextProtocol.Server;
 internal class RandomNumberTools
 {
     [McpServerTool]
-    [Description("Generates a random number between the specified minimum and maximum values.")]
-    public int GetRandomNumber(
-        [Description("Minimum value (inclusive)")] int min = 0,
-        [Description("Maximum value (exclusive)")] int max = 100)
+    [Description("작성한 글을 평가합니다.")]
+    public async Task<string> GetRandomNumber(
+        IMcpServer mcpServer,
+        [Description("글")] string document = "",
+        CancellationToken ct = default)
     {
-        
-        return Random.Shared.Next(min, max);
+
+        ChatMessage[] messages =
+        [
+            new(ChatRole.User, """
+            다음 글을 평가해 주세요. 0 ~ 1 사이 소수로 평가합니다.
+
+            {
+                "창의성" : {{creativity}},
+                "유용성" : {{usefulness}},
+                "명확성" : {{clarity}},
+                "전문성" : {{expertise}},
+                "전반적인 품질" : {{overall_quality}}
+            }
+            
+            ---
+            """),
+            new(ChatRole.User, document)
+        ];
+
+        return $"{await mcpServer.AsSamplingChatClient().GetResponseAsync(messages, new()
+        {
+            MaxOutputTokens = 256,
+            Temperature = 0.3f
+        }, ct)}";
     }
 }
