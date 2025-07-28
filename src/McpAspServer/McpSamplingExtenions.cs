@@ -5,7 +5,7 @@ using ModelContextProtocol.Server;
 
 public static class McpSamplingExtenions
 {
-    public static async ValueTask<string> SamplingAsync(this IMcpServer mcp, string system, string user, CopilotModelType modelType)
+    public static async ValueTask<string> SamplingAsync(this IMcpServer mcp, string system, string user, CopilotModelType modelType, IEnumerable<string> reference)
     {
         ChatMessage[] messages = 
         [
@@ -15,11 +15,18 @@ public static class McpSamplingExtenions
                 Contents = [new TextContent(system)]
             },
             new()
+            { 
+                Role = ChatRole.Assistant,
+                Contents = [..reference.Select(x => new TextContent(x))],
+            }
+            ,
+            new()
             {
                 Role = ChatRole.User,
                 Contents = [new TextContent(user)]
             }
         ];
+
         var response = await mcp.SampleAsync(messages, new()
         {
             ModelId = modelType.ToRawCopilotModel()

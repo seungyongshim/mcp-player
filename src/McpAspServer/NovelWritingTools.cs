@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Text;
 using McpAspServer;
 using ModelContextProtocol.Server;
 
@@ -11,13 +12,13 @@ internal class NovelWritingTools
         IMcpServer mcpServer,
         [Description("작성지침")] string document,
         [Description("outputfilefullpath")] string outputfilefullpath,
-        [Description("참고자료들의 파일 fullpath 경로")] string[] referenceFileFullPaths)
+        [Description("referencefilefullpath: 참고해야 하는 파일들")] string[] referenceFileFullPaths)
     {
-        referenceFileFullPaths = referenceFileFullPaths ?? [];
+        var refs = referenceFileFullPaths?.Select(x => File.ReadAllText(x, Encoding.UTF8)).ToArray() ?? [];
 
         var ret = await mcpServer.SamplingAsync("""
             글을 작성해 주세요.
-            """, document, CopilotModelType.Claude37SonnetThought);
+            """, document, CopilotModelType.Claude37SonnetThought, refs);
         
         var file = new FileInfo(outputfilefullpath);
 
@@ -50,7 +51,7 @@ internal class NovelWritingTools
                 "전문성" : {{expertise}},
                 "전반적인 품질" : {{overall_quality}}
             }
-            """, document, CopilotModelType.Claude37SonnetThought);
+            """, document, CopilotModelType.Claude37SonnetThought, []);
     }
 }
 
