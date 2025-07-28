@@ -1,33 +1,80 @@
 ﻿namespace McpAspServer;
 
+using System.Text.Json;
 using Microsoft.Extensions.AI;
 using ModelContextProtocol.Server;
 
 public static class McpSamplingExtenions
 {
-    public static async ValueTask<string> SamplingAsync(this IMcpServer mcp, string system, string user, CopilotModelType modelType, IEnumerable<string> reference)
+    public static ValueTask<string> SamplingAsync
+    (
+        this IMcpServer mcp, 
+        string system, 
+        string user, 
+        CopilotModelType modelType
+    ) => SamplingAsync(mcp, system, user, modelType, []);
+
+    // 정상동작 안함
+    public static async ValueTask<T?> SamplingAsync<T>
+    (
+        this IMcpServer mcp,
+        string system,
+        string user,
+        CopilotModelType modelType,
+        IEnumerable<string> reference
+    ) where T: class
     {
-        ChatMessage[] messages = 
-        [
+        var chatClient = mcp.AsSamplingChatClient();
+
+        var ret = await chatClient.GetResponseAsync<T>(messages: [
             new()
             {
                 Role = ChatRole.System,
                 Contents = [new TextContent(system)]
             },
             new()
-            { 
+            {
                 Role = ChatRole.Assistant,
                 Contents = [..reference.Select(x => new TextContent(x))],
-            }
-            ,
+            },
+            new()
+            {
+                Role = ChatRole.User,
+                Contents = [new TextContent(user)]
+            }], options: new()
+            {
+                ModelId = modelType.ToRawCopilotModel()
+            });
+        return ret?.Result;
+    }
+
+    public static async ValueTask<string> SamplingAsync
+    (
+        this IMcpServer mcp, 
+        string system, 
+        string user, 
+        CopilotModelType modelType,
+        IEnumerable<string> reference,
+        object? ReturnType = null
+    )
+    {
+        var response = await mcp.SampleAsync([
+            new()
+            {
+                Role = ChatRole.System,
+                Contents = [new TextContent(system)]
+            },
+            new()
+            {
+                Role = ChatRole.Assistant,
+                Contents = [..reference.Select(x => new TextContent(x))],
+            },
             new()
             {
                 Role = ChatRole.User,
                 Contents = [new TextContent(user)]
             }
-        ];
-
-        var response = await mcp.SampleAsync(messages, new()
+        ], new()
         {
             ModelId = modelType.ToRawCopilotModel()
         });

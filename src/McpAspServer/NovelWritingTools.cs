@@ -14,7 +14,7 @@ internal class NovelWritingTools
         [Description("outputfilefullpath")] string outputfilefullpath,
         [Description("referencefilefullpath: 참고해야 하는 파일들")] string[] referenceFileFullPaths)
     {
-        var refs = referenceFileFullPaths?.Select(x => File.ReadAllText(x, Encoding.UTF8)).ToArray() ?? [];
+        var refs = referenceFileFullPaths?.Select(x => File.ReadAllText(x, Encoding.UTF8).ToArray() ?? [];
 
         var ret = await mcpServer.SamplingAsync("""
             글을 작성해 주세요.
